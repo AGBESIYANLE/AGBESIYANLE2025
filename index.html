@@ -3,119 +3,133 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Agbesiyanle 2025 - Recadrage Personnalisé</title>
-  
-  <!-- Styles CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/cropperjs@1.6.1/dist/cropper.min.css">
+  <title>Agbesiyanle 2025</title>
+  <link rel="stylesheet" href="https://unpkg.com/cropperjs/dist/cropper.min.css">
   <style>
     body {
       font-family: Arial, sans-serif;
       text-align: center;
-      background: #f4f4f4;
-      padding-bottom: 50px;
+      background-color: #f0f0f0;
     }
-    h1 { margin-top: 20px; }
+
+    .container {
+      position: relative;
+      max-width: 1080px;
+      margin: auto;
+    }
+
+    #canvas {
+      width: 100%;
+      max-width: 1080px;
+      height: auto;
+      border: 1px solid #ccc;
+    }
+
     .button {
-      background-color: #5f3076; color: #fff;
-      border: none; padding: 10px; border-radius: 5px;
-      cursor: pointer; margin: 10px auto; display: block;
-      max-width: 300px; width: 90%;
+      padding: 10px 20px;
+      margin: 10px;
+      background-color: #5f3076;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
     }
-    #canvas { max-width: 90%; border: 2px solid #ddd; }
-    #previewContainer { display: none; margin: 15px auto; max-width:90%; }
-    img { max-width: 100%; }
+
+    #crop-container {
+      display: none;
+      position: relative;
+      margin: auto;
+      width: 1080px;
+      max-width: 90%;
+    }
+
+    #cropper-image, #overlay {
+      width: 100%;
+    }
+
+    #overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 10;
+    }
   </style>
 </head>
-
 <body>
-  <h1>Personnalise ton visuel Agbesiyanle 2025</h1>
 
-  <input type="file" id="fileInput" accept="image/*" class="button">
-  <div id="previewContainer">
-    <img id="userImage" src="">
+<h2 style="margin-top:20px;">Participe à Agbesiyanle 2025</h1>
+
+<input type="file" id="fileInput" accept="image/*" class="button">
+<button id="btnValider" class="button" style="display:none;">Télécharger</button>
+
+<div id="cropper-container">
+  <div id="cropper-area" class="container">
+    <img id="cropper-image">
+    <img id="overlay" src="visuel_de_base.png"> <!-- Image toujours au premier plan -->
   </div>
+</div>
 
-  <button id="validateBtn" class="button" style="display:none;">Valider et Télécharger</button>
-  <canvas id="canvas" width="1080" height="1080"></canvas>
+<script src="https://unpkg.com/cropperjs"></script>
+<script>
+  const input = document.getElementById('photoInput');
+  const cropperContainer = document.getElementById('cropper-container');
+  const cropperImage = document.getElementById('cropper-image');
+  const btnDownload = document.getElementById('validateBtn');
+  let cropper;
 
-  <!-- Scripts JS -->
-  <script src="https://unpkg.com/cropperjs@1.6.1/dist/cropper.min.js"></script>
-  <script>
-    const fileInput = document.getElementById('fileInput');
-    const canvas = document.getElementById('canvas');
+  document.getElementById('photoInput').onchange = function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(event) {
+      cropperImage.src = event.target.result;
+
+      if(cropper) cropper.destroy();
+
+      cropper = new Cropper(cropperImage, {
+        aspectRatio: 532/725,
+        viewMode:1,
+        dragMode: 'move',
+        autoCropArea:1,
+        responsive:true,
+        zoomable:true,
+        background:false,
+      });
+
+      document.getElementById('cropper-container').style.display = 'block';
+      document.getElementById('validateBtn').style.display = 'inline-block';
+    };
+    reader.readAsDataURL(file);
+  };
+
+  document.getElementById('validateBtn').onclick = function() {
+    const croppedCanvas = cropper.getCroppedCanvas({width:532, height:725});
+    const canvasFinal = document.createElement('canvas');
+    canvasFinal.width = 1080;
+    canvas.height = 1080;
     const ctx = canvas.getContext('2d');
-    const userImage = document.getElementById('userImage');
-    const previewContainer = document.getElementById('previewContainer');
-    const validateBtn = document.getElementById('validateBtn');
-    let cropper;
 
-    // Afficher le visuel de base immédiatement
     const baseImage = new Image();
-    baseImage.src = 'visuel_de_base.png'; // Remplacer par ton visuel de base
-    baseImage.onload = function() {
-      ctx.drawImage(baseImage, 0, 0, canvas.width, canvas.height);
+    baseImage.src = 'visuel_de_base.png';
+
+    baseImage.onload = function(){
+      ctx.drawImage(cropper.getCroppedCanvas(), 474, 81, 532, 725);
+      ctx.drawImage(baseImage,0,0,1080,1080);
+
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/png');
+      link.download = 'visuel_agbesiyanle.png';
+      link.click();
+
+      cropper.destroy();
+      document.getElementById('cropper-container').style.display = 'none';
+      document.getElementById('validateBtn').style.display = 'none';
+      document.getElementById('photoInput').value = '';
     };
+  };
+</script>
 
-    // Importer l'image et initialiser Cropper.js
-    fileInput.onchange = function(e) {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(event) {
-          userImage.src = event.target.result;
-          previewContainer.style.display = 'block';
-
-          if (cropper) cropper.destroy();
-
-          cropper = new Cropper(userImage, {
-            viewMode: 1,
-            dragMode: 'move',
-            aspectRatio: 532 / 725, // cadre prédéfini
-            autoCropArea: 1,
-            responsive: true,
-            background: false,
-            zoomable: true,
-          });
-
-          validateBtn.style.display = 'block';
-        };
-        reader.readAsDataURL(file);
-      }
-    };
-
-    // Valider, afficher la photo recadrée et télécharger
-    validateBtn.onclick = function() {
-      const croppedCanvas = cropper.getCroppedCanvas({
-        width: 532,
-        height: 725,
-      });
-
-      // Redessiner sur le canvas final
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      croppedCanvas.toBlob(function(blob) {
-        const adjustedImage = new Image();
-        adjustedImage.src = URL.createObjectURL(blob);
-        adjustedImage.onload = function() {
-
-          // Image utilisateur bien positionnée
-          ctx.drawImage(adjustedImage, 474, 81, 532, 725);
-          ctx.drawImage(baseImage, 0, 0, canvas.width, canvas.height);
-
-          // Téléchargement automatique
-          const finalLink = document.createElement('a');
-          finalLink.download = 'Agbesiyanle2025.png';
-          finalLink.href = canvas.toDataURL();
-          finalLink.click();
-
-          // Nettoyer la prévisualisation après téléchargement
-          previewContainer.style.display = 'none';
-          validateBtn.style.display = 'none';
-          cropper.destroy();
-          fileInput.value = '';
-        };
-      });
-    };
-  </script>
 </body>
 </html>
