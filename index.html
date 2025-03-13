@@ -3,28 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Agbesiyanle 2025 - Ajustement interactif</title>
-  <link rel="stylesheet" href="https://unpkg.com/cropperjs/dist/cropper.min.css">
+  <title>Agbesiyanle 2025 - Recadrage Personnalisé</title>
+  
+  <!-- Styles CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/cropperjs@1.6.1/dist/cropper.min.css">
   <style>
     body {
-      font-family: Arial, sans-serif; text-align: center; background: #f4f4f4;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #f4f4f4;
+      padding-bottom: 50px;
     }
-    h1 { margin-top: 15px; }
+    h1 { margin-top: 20px; }
     .button {
-      background-color: #5f3076; color: #fff; padding: 10px; 
-      border: none; border-radius: 5px; cursor: pointer; 
-      width: 90%; max-width: 300px; margin: 10px auto; display: block;
+      background-color: #5f3076; color: #fff;
+      border: none; padding: 10px; border-radius: 5px;
+      cursor: pointer; margin: 10px auto; display: block;
+      max-width: 300px; width: 90%;
     }
-    #cropContainer {
-      position: relative; margin: 15px auto; width: 1080px; max-width: 90%;
-    }
-    #cropContainer img, #overlay {
-      width: 100%; display: block;
-    }
-    #overlay {
-      position: absolute; top: 0; left: 0; pointer-events: none; z-index: 10;
-    }
-    #canvas { display:none; }
+    #canvas { max-width: 90%; border: 2px solid #ddd; }
+    #previewContainer { display: none; margin: 15px auto; max-width:90%; }
+    img { max-width: 100%; }
   </style>
 </head>
 
@@ -32,42 +31,50 @@
   <h1>Personnalise ton visuel Agbesiyanle 2025</h1>
 
   <input type="file" id="fileInput" accept="image/*" class="button">
-  
-  <div id="cropContainer">
-    <img id="userImage">
-    <img id="overlay" src="visuel_de_base.png">
+  <div id="previewContainer">
+    <img id="userImage" src="">
   </div>
 
   <button id="validateBtn" class="button" style="display:none;">Valider et Télécharger</button>
-
   <canvas id="canvas" width="1080" height="1080"></canvas>
 
-  <script src="https://unpkg.com/cropperjs/dist/cropper.min.js"></script>
+  <!-- Scripts JS -->
+  <script src="https://unpkg.com/cropperjs@1.6.1/dist/cropper.min.js"></script>
   <script>
     const fileInput = document.getElementById('fileInput');
-    const userImage = document.getElementById('userImage');
-    const validateBtn = document.getElementById('validateBtn');
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
+    const userImage = document.getElementById('userImage');
+    const previewContainer = document.getElementById('previewContainer');
+    const validateBtn = document.getElementById('validateBtn');
     let cropper;
 
+    // Afficher le visuel de base immédiatement
+    const baseImage = new Image();
+    baseImage.src = 'visuel_de_base.png'; // Remplacer par ton visuel de base
+    baseImage.onload = function() {
+      ctx.drawImage(baseImage, 0, 0, canvas.width, canvas.height);
+    };
+
+    // Importer l'image et initialiser Cropper.js
     fileInput.onchange = function(e) {
       const file = e.target.files[0];
       if (file) {
         const reader = new FileReader();
         reader.onload = function(event) {
           userImage.src = event.target.result;
+          previewContainer.style.display = 'block';
 
           if (cropper) cropper.destroy();
 
           cropper = new Cropper(userImage, {
             viewMode: 1,
             dragMode: 'move',
-            aspectRatio: 532 / 725,
+            aspectRatio: 532 / 725, // cadre prédéfini
             autoCropArea: 1,
             responsive: true,
-            zoomable: true,
             background: false,
+            zoomable: true,
           });
 
           validateBtn.style.display = 'block';
@@ -76,34 +83,36 @@
       }
     };
 
+    // Valider, afficher la photo recadrée et télécharger
     validateBtn.onclick = function() {
       const croppedCanvas = cropper.getCroppedCanvas({
         width: 532,
         height: 725,
       });
 
+      // Redessiner sur le canvas final
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
       croppedCanvas.toBlob(function(blob) {
-        const userImgFinal = new Image();
-        userImgFinal.src = URL.createObjectURL(blob);
-        userImgFinal.onload = function() {
-          const baseImage = new Image();
-          baseImage.src = 'visuel_de_base.png';
-          baseImage.onload = function() {
+        const adjustedImage = new Image();
+        adjustedImage.src = URL.createObjectURL(blob);
+        adjustedImage.onload = function() {
 
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(userImgFinal, 474, 81, 532, 725);
-            ctx.drawImage(baseImage, 0, 0, canvas.width, canvas.height);
+          // Image utilisateur bien positionnée
+          ctx.drawImage(adjustedImage, 474, 81, 532, 725);
+          ctx.drawImage(baseImage, 0, 0, canvas.width, canvas.height);
 
-            const finalLink = document.createElement('a');
-            finalLink.download = 'Agbesiyanle2025.png';
-            finalLink.href = canvas.toDataURL();
-            finalLink.click();
+          // Téléchargement automatique
+          const finalLink = document.createElement('a');
+          finalLink.download = 'Agbesiyanle2025.png';
+          finalLink.href = canvas.toDataURL();
+          finalLink.click();
 
-            cropper.destroy();
-            validateBtn.style.display = 'none';
-            fileInput.value = '';
-            userImage.src = '';
-          };
+          // Nettoyer la prévisualisation après téléchargement
+          previewContainer.style.display = 'none';
+          validateBtn.style.display = 'none';
+          cropper.destroy();
+          fileInput.value = '';
         };
       });
     };
